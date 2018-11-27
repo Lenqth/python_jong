@@ -125,6 +125,7 @@ class Game:
         #self.players[0].hand=[1,1,1,2,2,2,3,3,3,4,4,4,5]
         self.is_ready = True
         self.konged_tile = False
+        self.apkong = False
 
     def draw(self):
         # print("d:%d",len(self.pile)-self.pilepos)
