@@ -113,7 +113,7 @@ class Exposed:
         elif self.type == Exposed.PUNG :
             return "PUNG( %d,%d,%d )" % (self.head,self.head,self.head)
         elif self.type == Exposed.MINKONG :
-            return "MINKONG( %d,%d,%d,%d )" % (self.head,self.head,self.head)
+            return "MINKONG( %d,%d,%d,%d )" % (self.head,self.head,self.head,self.head)
         elif self.type == Exposed.APKONG :
             return "APKONG( %d,%d,%d,%d )" % (self.head,self.head,self.head,self.head)
         elif self.type == Exposed.CONCKONG :
