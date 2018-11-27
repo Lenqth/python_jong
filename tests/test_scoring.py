@@ -1,12 +1,11 @@
 # -*- coding : utf-8 -*- 
 
 import sys,os
-sys.path.append( os.path.dirname( os.path.dirname(__file__) ) )
 
 import unittest
-from judge.agari import *
-from judge.util import *
-from judge.scoring import ChineseScore
+from games.jong.judge.agari import *
+from games.jong.judge.util import *
+from games.jong.judge.scoring import ChineseScore
 
 def testyaku(str) : 
     handtiles,exposed,tsumo = string_to_list_ex(str)

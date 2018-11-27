@@ -1,9 +1,8 @@
 
 import sys,os
-sys.path.append( os.path.dirname( os.path.dirname(__file__) ) )
 
 import unittest
-from judge.agari import *
+from games.jong.judge.agari import *
 
 class TestAgari(unittest.TestCase):
 
