@@ -44,16 +44,22 @@ class Player:
                         "deck_left":game.lefttile(),
                         "discarded_tiles": discarded_tiles ,
                         "exposed_tiles": exposed_tiles ,
-                        "robbed_tile":False,
-                        "konged_tile":False,
+                        "robbed_tile":game.apkong and (not tsumo),
+                        "konged_tile":game.konged_tile,
                      }
         res = ChineseScore.judge( self.hand+[tile] ,to_mentu(self.exposed),env=env,agari_tile=tile)
         self.agari_infos = res
-        return (res is not None)
+        if (res is not None):
+            if game.get_config("minimum_value") <= res[2] : 
+                return True
+            else:
+                return False
+        return False
 
     def chk_claim(self,game,tile,apkong):
         res = []
-        if self.chk_agari( game , tile , tsumo = False ): #ロン
+        agari_res = self.chk_agari( game , tile , tsumo = False )
+        if agari_res : #ロン
             res.append( Claim(Claim.RON) )
         if apkong:
             return res

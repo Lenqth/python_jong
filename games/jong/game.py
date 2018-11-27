@@ -86,10 +86,14 @@ class Game:
             t.append( await pl.agent.send( {"type":"open_hand","hand":[{"hand":self.players[i].hand,"drew":self.players[i].drew} for i in range(4)]}) )
         await Promise.all(t)
 
+    def get_config(self,name):
+        deflt = {"timeout":30 , "minimum_value":8} 
+        return safe_get(self.config,name,deflt[name])
+
     def __init__(self,config):
         self.config = config
         self.total_score = np.zeros( 4 , np.int16 )
-        self.timeout = safe_get(config,"timeout",30)
+        self.timeout = self.get_config("timeout")
         self.is_ready = False
         self.players = [ Player(self,i) for i in range(4)]
         for i,p in enumerate( self.players ):
@@ -128,7 +132,6 @@ class Game:
             return None
         res = self.pile[self.pilepos]
         self.pilepos+=1
-        self.konged_tile = False
         return res
 
     def lefttile(self):
@@ -156,7 +159,7 @@ class Game:
             res = await self.one_game()
             self.total_score += res
             confirm_tasks = [ p.agent.confirm("next") for p in self.players  ]
-            Promise.all(confirm_tasks)
+            await Promise.all(confirm_tasks)
         return self.total_score
 
     async def one_game(self):
@@ -179,7 +182,7 @@ class Game:
             self.skip_draw = False
 
             turn_player = self.players[self.turn]
-            print("(player {0} , {1} tiles left)".format(self.turn,len(self.pile)-self.pilepos) , flush=True )
+            # print("(player {0} , {1} tiles left)".format(self.turn,len(self.pile)-self.pilepos) , flush=True )
 
             turn_player.hand.sort()
             turn_command = await turn_player.turn(self) # 打牌 or 加槓/暗槓 or ツモ
@@ -192,10 +195,12 @@ class Game:
                 tile = turn_player.pop_from_hand( turn_command.pos )
                 obj = { "id":tile , "tsumogiri":tsumogiri , "yoko":False , "claimed":False }
                 turn_player.trash.append( obj )
+                self.konged_tile = False
                 await self.send_discard(self.turn, { "id":tile , "tsumogiri":tsumogiri , "yoko":False , "claimed":False } )
             elif turn_command.type == TurnCommand.APKONG :
                 tile = turn_player.pop_from_hand( turn_command.pos )
                 self.apkong = True
+                self.konged_tile = True
                 await self.send_apkong(self.turn,tile)
             elif turn_command.type == TurnCommand.CONCKONG :
                 ts = turn_player.pop_from_hand( turn_command.pos )
@@ -207,18 +212,18 @@ class Game:
                     turn_player.drew = None
                     turn_player.hand.sort()
                 await self.send_expose(self.turn,ex)
+                self.konged_tile = True
                 continue
             elif turn_command.type == TurnCommand.TSUMO :
                 score_li = [-8,-8,-8,-8]
                 score_li[:] -= turn_player.agari_infos[0]
-                score_li[command_player_id] = 24 + turn_player.agari_infos[0] * 3
+                score_li[self.turn] = 24 + turn_player.agari_infos[0] * 3
                 self.is_done = True
                 self.is_ready = False
                 await self.send_agari(self.turn,True,turn_player.agari_infos,turn_player.agari_infos)
                 return tuple(score_li)
             # print(tile)
             self.target_tile = tile
-            print("DEBUG:BEFORE SUBTURN")
             subturn_tasks = [ None for i in range(4) ]
             for i in range(1,4): # 鳴き
                 pi = ( self.turn + i ) % 4

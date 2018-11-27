@@ -35,5 +35,5 @@ def config():
     obj["room_size"] = { "display_name":"人数" , "default":2 , "value":[1,2,4]  }
     obj["iteration"] = { "display_name":"局数" , "default":4 , "value":[1,2,4,8,16]  }
     obj["timeout"] = { "display_name":"制限時間" , "default":30 , "value":[15,30,60,300]  }
-
+    obj["minimum_value"] = { "display_name":"最低点数" , "default":8 , "value":[0,6,8,16]  }
     return obj
