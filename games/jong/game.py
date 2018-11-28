@@ -114,7 +114,7 @@ class Game:
         deck = np.array( [1,2,3,4,5,6,7,8,9,
                 17,18,19,20,21,22,23,24,25,
                 33,34,35,36,37,38,39,40,41,
-                49,50,51,52,53,54,55] * 4 ) # + [56] * 8 )
+                49,50,51,52,53,54,55] * 4 ) # + [65] * 8 )
         np.random.shuffle(deck)
         self.pile = deck
         self.pilepos = 0
@@ -122,13 +122,11 @@ class Game:
             p.reset()
             for i in range(13):
                 p.hand.append(self.draw())
-        #self.players[0].hand=[1,1,1,2,2,2,3,3,3,4,4,4,5]
         self.is_ready = True
         self.konged_tile = False
         self.apkong = False
 
     def draw(self):
-        # print("d:%d",len(self.pile)-self.pilepos)
         if self.pilepos >= len(self.pile):
             return None
         res = self.pile[self.pilepos]
@@ -138,32 +136,21 @@ class Game:
     def lefttile(self):
         return len(self.pile) - self.pilepos
 
-#    def run(self):
-#        print("run start")
-#        res = self.go()
-#        self.reward = res
-#        print( "END: reward = ( {0:>3} , {1:>3} , {2:>3} , {3:>3} )".format(*res) , flush=True )
-#        print("run end")
-#
-#    def run_forever(self):
-#        while True:
-#            res = self.go()
-#            self.reward = res
-#            self.shanten_end = [ self.players[i].shanten() for i in range(4) ]
-#            print( "{0:>3} , {1:>3} , {2:>3} , {3:>3} , {4:>3} , {5:>3} , {6:>3} , {7:>3}".format(*res , *self.shanten_end  ) , flush=True )
-
     async def run(self):
         self.total_score = np.zeros( 4 , np.int16 )
+        self.log_all = []
         for i in range(self.config["iteration"]):
             self._prevalent_wind = i // 4
             self._seat_wind_offset = i % 4
             res = await self.one_game()
+            self.log_all.append(self.log)
             self.total_score += res
             confirm_tasks = [ p.agent.confirm("next") for p in self.players  ]
             await Promise.all(confirm_tasks)
         return self.total_score
 
     async def one_game(self):
+        self.log = []
         self.is_done = False
         self.init()
         for p in self.players:
@@ -187,6 +174,7 @@ class Game:
 
             turn_player.hand.sort()
             turn_command = await turn_player.turn(self) # 打牌 or 加槓/暗槓 or ツモ
+            self.log.append(turn_command)
             self.apkong = False
             if turn_command.type == TurnCommand.DISCARD :
                 tsumogiri = turn_command.pos == -1
@@ -222,6 +210,7 @@ class Game:
                 self.is_done = True
                 self.is_ready = False
                 await self.send_agari(self.turn,True,turn_player.agari_infos,turn_player.agari_infos)
+                self.log.append( score_li )
                 return tuple(score_li)
             # print(tile)
             self.target_tile = tile
@@ -232,6 +221,12 @@ class Game:
             subturn_tasks[self.turn] = pure_async( Claim(0) )
             command = await Promise.all(subturn_tasks)
             command_player_id = np.argmax(command)
+            claims = []
+            for i in range(4):
+                if command[i].type > 0:
+                    claims.append( (i,command[i]) )
+            claims.sort(reversed=True)
+            self.log.append(claims)
 
             if command[command_player_id].type > 0 : # 鳴き/ロンがあった場合
                 if command[command_player_id].type == Claim.RON :
@@ -243,6 +238,7 @@ class Game:
                     self.is_done = True
                     self.is_ready = False
                     await self.send_agari(command_player_id,False,agari_player.agari_infos,agari_player.agari_infos)
+                    self.log.append( score_li )
                     return tuple(score_li)
                 elif command[command_player_id].type == Claim.MINKONG :
                     a,b,c = filter( lambda x:x>=0 , command[command_player_id].pos  )

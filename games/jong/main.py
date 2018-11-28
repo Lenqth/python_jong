@@ -24,7 +24,8 @@ async def main(conns,room):
     await Promise.all(tasks)
 
     try:
-        await game.run()
+        res = await game.run()
+        
     except Exception as e :
         traceback.print_exc()
         raise e

@@ -98,7 +98,7 @@ class RemotePlayer:
     async def confirm(self,message):
         obj = { "type": "confirm" , "message":message }
         try:
-            await self.conn.send_and_receive_reply( obj ,timeout=300)
+            await self.conn.send_and_receive_reply( obj ,timeout=3000)
         except Exception as e :
             traceback.format_exc()
             return
