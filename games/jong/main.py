@@ -7,6 +7,8 @@ from .agent import *
 import asyncio
 from promise import Promise
 
+from .models import GameJongResult
+
 async def main(conns,room):
     game = Game(room.config)
     for i in range(4):
@@ -25,7 +27,12 @@ async def main(conns,room):
 
     try:
         res = await game.run()
-        
+        result = GameJongResult()
+        result.score1 = res[0]
+        result.score2 = res[1]
+        result.score3 = res[2]
+        result.score4 = res[3]
+        result.save()
     except Exception as e :
         traceback.print_exc()
         raise e

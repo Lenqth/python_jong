@@ -225,7 +225,7 @@ class Game:
             for i in range(4):
                 if command[i].type > 0:
                     claims.append( (i,command[i]) )
-            claims.sort(reversed=True)
+            claims=sorted(claims,reverse=True)
             self.log.append(claims)
 
             if command[command_player_id].type > 0 : # 鳴き/ロンがあった場合
