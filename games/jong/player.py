@@ -84,8 +84,8 @@ class Player:
 
     def chk_turn_claim(self,game):
         # apkong
+        res = []
         if game.lefttile() >= 1 :
-            res = []
             for ex in self.exposed:
                 if ex.type == Exposed.PUNG :
                     for (p,t) in enumerate(self.hand) :
