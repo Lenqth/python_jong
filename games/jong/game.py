@@ -157,6 +157,7 @@ class Game:
             p.hand.sort()
         self.skip_draw = False
         await Promise.all( [self.send_all_state(i) for i in range(4)] )
+        self.turn = ( 4 - self._seat_wind_offset ) % 4
         while True:
             if self.skip_draw == False and self.players[self.turn].drew == None :
                 tm = self.draw()

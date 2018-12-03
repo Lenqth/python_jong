@@ -49,8 +49,9 @@ class Player:
                      }
         res = ChineseScore.judge( self.hand+[tile] ,to_mentu(self.exposed),env=env,agari_tile=tile)
         self.agari_infos = res
+        minv = game.get_config("minimum_value")
         if (res is not None):
-            if game.get_config("minimum_value") <= res[2] : 
+            if ( minv >= 0 and minv <= res[2] ) or ( minv < 0 and res[2] < -minv ) : 
                 return True
             else:
                 return False
