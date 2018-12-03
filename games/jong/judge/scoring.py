@@ -535,12 +535,12 @@ class ChineseScore:
     """
     @yakuroutine
     def samechow(self):
-        cnt = np.sum( self.chows > 0 , axis = 0 )
+        cnt = self.chows
         if ( cnt >= 4 ).any():
             return ChineseScore.chow4s
         if ( cnt >= 3 ).any():
             return ChineseScore.chow3s
-        mcnt = np.all( self.chows > 0 , axis = 1 )
+        mcnt = np.all( self.chows[0:3,:] > 0 , axis = 0 )
         if ( mcnt ).any() :
             return ChineseScore.chow3ms
 
