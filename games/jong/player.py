@@ -44,32 +44,40 @@ class Player:
                         "deck_left":game.lefttile(),
                         "discarded_tiles": discarded_tiles ,
                         "exposed_tiles": exposed_tiles ,
-                        "robbed_tile":False,
-                        "konged_tile":False,
+                        "robbed_tile":game.apkong and (not tsumo),
+                        "konged_tile":game.konged_tile,
                      }
         res = ChineseScore.judge( self.hand+[tile] ,to_mentu(self.exposed),env=env,agari_tile=tile)
         self.agari_infos = res
-        return (res is not None)
+        minv = game.get_config("minimum_value")
+        if (res is not None):
+            if ( minv >= 0 and minv <= res[2] ) or ( minv < 0 and res[2] < -minv ) : 
+                return True
+            else:
+                return False
+        return False
 
     def chk_claim(self,game,tile,apkong):
         res = []
-        if self.chk_agari( game , tile , tsumo = False ): #ロン
+        agari_res = self.chk_agari( game , tile , tsumo = False )
+        if agari_res : #ロン
             res.append( Claim(Claim.RON) )
         if apkong:
             return res
         fq = np.bincount(self.hand,minlength=64)
         a = np.array(self.hand)
-        # chow
-        if (game.turn+1)%4 == self.id and tile < 48: # number tiles
-            if fq[tile-1] > 0 and fq[tile+1] > 0 :
-                res.append( Claim( Claim.CHOW , [ np.where(a==tile-1)[0][0] , np.where(a==tile+1)[0][0] , -2 ] ) )
-            if fq[tile+1] > 0 and fq[tile+2] > 0 :
-                res.append( Claim( Claim.CHOW , [ np.where(a==tile+1)[0][0] , np.where(a==tile+2)[0][0] , -2 ] ) )
-            if fq[tile-2] > 0 and fq[tile-1] > 0 :
-                res.append( Claim( Claim.CHOW , [ np.where(a==tile-2)[0][0] , np.where(a==tile-1)[0][0] , -2 ] ) )
-        # pung
-        if fq[tile] >= 2 :
-            res.append( Claim( Claim.PUNG , list( np.where(a==tile)[0][0:2] ) + [-2] ) )
+        if game.lefttile() >= 1 :
+            # chow
+            if (game.turn+1)%4 == self.id and tile < 48: # number tiles
+                if fq[tile-1] > 0 and fq[tile+1] > 0 :
+                    res.append( Claim( Claim.CHOW , [ np.where(a==tile-1)[0][0] , np.where(a==tile+1)[0][0] , -2 ] ) )
+                if fq[tile+1] > 0 and fq[tile+2] > 0 :
+                    res.append( Claim( Claim.CHOW , [ np.where(a==tile+1)[0][0] , np.where(a==tile+2)[0][0] , -2 ] ) )
+                if fq[tile-2] > 0 and fq[tile-1] > 0 :
+                    res.append( Claim( Claim.CHOW , [ np.where(a==tile-2)[0][0] , np.where(a==tile-1)[0][0] , -2 ] ) )
+            # pung
+            if fq[tile] >= 2 :
+                res.append( Claim( Claim.PUNG , list( np.where(a==tile)[0][0:2] ) + [-2] ) )
         # kong
         if fq[tile] >= 3 :
             res.append( Claim( Claim.MINKONG , list( np.where(a==tile)[0][0:3] ) + [-2] ) )
@@ -78,24 +86,25 @@ class Player:
     def chk_turn_claim(self,game):
         # apkong
         res = []
-        for ex in self.exposed:
-            if ex.type == Exposed.PUNG :
-                for (p,t) in enumerate(self.hand) :
-                    if t == ex.head :
-                        res.append( TurnCommand(TurnCommand.APKONG,[p] , ex ) )
-                if self.drew == ex.head :
-                    res.append( TurnCommand(TurnCommand.APKONG,[-1] , ex ) )
+        if game.lefttile() >= 1 :
+            for ex in self.exposed:
+                if ex.type == Exposed.PUNG :
+                    for (p,t) in enumerate(self.hand) :
+                        if t == ex.head :
+                            res.append( TurnCommand(TurnCommand.APKONG,[p] , ex ) )
+                    if self.drew == ex.head :
+                        res.append( TurnCommand(TurnCommand.APKONG,[-1] , ex ) )
 
-        #conckong
-        fq = np.bincount(self.hand,minlength=64)
-        a = np.array(self.hand)
-        for (t,q) in enumerate(fq) :
-            if q >= 4 :
-                arr = np.array(self.hand)
-                res.append( TurnCommand(TurnCommand.CONCKONG, list(np.where(a == t)[0][0:4]) ) )
-            elif q >= 3 and t == self.drew :
-                arr = np.array(self.hand)
-                res.append( TurnCommand(TurnCommand.CONCKONG, list(np.where(a == t)[0][0:3]) + [-1] ) )
+            #conckong
+            fq = np.bincount(self.hand,minlength=64)
+            a = np.array(self.hand)
+            for (t,q) in enumerate(fq) :
+                if q >= 4 :
+                    arr = np.array(self.hand)
+                    res.append( TurnCommand(TurnCommand.CONCKONG, list(np.where(a == t)[0][0:4]) ) )
+                elif q >= 3 and t == self.drew :
+                    arr = np.array(self.hand)
+                    res.append( TurnCommand(TurnCommand.CONCKONG, list(np.where(a == t)[0][0:3]) + [-1] ) )
 
         #tsumo
         if self.drew != None and self.chk_agari( game , self.drew , tsumo = True ):

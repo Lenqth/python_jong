@@ -86,10 +86,14 @@ class Game:
             t.append( await pl.agent.send( {"type":"open_hand","hand":[{"hand":self.players[i].hand,"drew":self.players[i].drew} for i in range(4)]}) )
         await Promise.all(t)
 
+    def get_config(self,name):
+        deflt = {"timeout":30 , "minimum_value":8} 
+        return safe_get(self.config,name,deflt[name])
+
     def __init__(self,config):
         self.config = config
         self.total_score = np.zeros( 4 , np.int16 )
-        self.timeout = safe_get(config,"timeout",30)
+        self.timeout = self.get_config("timeout")
         self.is_ready = False
         self.players = [ Player(self,i) for i in range(4)]
         for i,p in enumerate( self.players ):
@@ -110,7 +114,7 @@ class Game:
         deck = np.array( [1,2,3,4,5,6,7,8,9,
                 17,18,19,20,21,22,23,24,25,
                 33,34,35,36,37,38,39,40,41,
-                49,50,51,52,53,54,55] * 4 ) # + [56] * 8 )
+                49,50,51,52,53,54,55] * 4 ) # + [65] * 8 )
         np.random.shuffle(deck)
         self.pile = deck
         self.pilepos = 0
@@ -118,54 +122,42 @@ class Game:
             p.reset()
             for i in range(13):
                 p.hand.append(self.draw())
-        #self.players[0].hand=[1,1,1,2,2,2,3,3,3,4,4,4,5]
         self.is_ready = True
         self.konged_tile = False
+        self.apkong = False
 
     def draw(self):
-        # print("d:%d",len(self.pile)-self.pilepos)
         if self.pilepos >= len(self.pile):
             return None
         res = self.pile[self.pilepos]
         self.pilepos+=1
-        self.konged_tile = False
         return res
 
     def lefttile(self):
         return len(self.pile) - self.pilepos
 
-#    def run(self):
-#        print("run start")
-#        res = self.go()
-#        self.reward = res
-#        print( "END: reward = ( {0:>3} , {1:>3} , {2:>3} , {3:>3} )".format(*res) , flush=True )
-#        print("run end")
-#
-#    def run_forever(self):
-#        while True:
-#            res = self.go()
-#            self.reward = res
-#            self.shanten_end = [ self.players[i].shanten() for i in range(4) ]
-#            print( "{0:>3} , {1:>3} , {2:>3} , {3:>3} , {4:>3} , {5:>3} , {6:>3} , {7:>3}".format(*res , *self.shanten_end  ) , flush=True )
-
     async def run(self):
         self.total_score = np.zeros( 4 , np.int16 )
+        self.log_all = []
         for i in range(self.config["iteration"]):
             self._prevalent_wind = i // 4
             self._seat_wind_offset = i % 4
             res = await self.one_game()
+            self.log_all.append(self.log)
             self.total_score += res
             confirm_tasks = [ p.agent.confirm("next") for p in self.players  ]
-            Promise.all(confirm_tasks)
+            await Promise.all(confirm_tasks)
         return self.total_score
 
     async def one_game(self):
+        self.log = []
         self.is_done = False
         self.init()
         for p in self.players:
             p.hand.sort()
         self.skip_draw = False
         await Promise.all( [self.send_all_state(i) for i in range(4)] )
+        self.turn = ( 4 - self._seat_wind_offset ) % 4
         while True:
             if self.skip_draw == False and self.players[self.turn].drew == None :
                 tm = self.draw()
@@ -179,10 +171,11 @@ class Game:
             self.skip_draw = False
 
             turn_player = self.players[self.turn]
-            print("(player {0} , {1} tiles left)".format(self.turn,len(self.pile)-self.pilepos) , flush=True )
+            # print("(player {0} , {1} tiles left)".format(self.turn,len(self.pile)-self.pilepos) , flush=True )
 
             turn_player.hand.sort()
             turn_command = await turn_player.turn(self) # 打牌 or 加槓/暗槓 or ツモ
+            self.log.append(turn_command)
             self.apkong = False
             if turn_command.type == TurnCommand.DISCARD :
                 tsumogiri = turn_command.pos == -1
@@ -192,10 +185,12 @@ class Game:
                 tile = turn_player.pop_from_hand( turn_command.pos )
                 obj = { "id":tile , "tsumogiri":tsumogiri , "yoko":False , "claimed":False }
                 turn_player.trash.append( obj )
+                self.konged_tile = False
                 await self.send_discard(self.turn, { "id":tile , "tsumogiri":tsumogiri , "yoko":False , "claimed":False } )
             elif turn_command.type == TurnCommand.APKONG :
                 tile = turn_player.pop_from_hand( turn_command.pos )
                 self.apkong = True
+                self.konged_tile = True
                 await self.send_apkong(self.turn,tile)
             elif turn_command.type == TurnCommand.CONCKONG :
                 ts = turn_player.pop_from_hand( turn_command.pos )
@@ -207,18 +202,19 @@ class Game:
                     turn_player.drew = None
                     turn_player.hand.sort()
                 await self.send_expose(self.turn,ex)
+                self.konged_tile = True
                 continue
             elif turn_command.type == TurnCommand.TSUMO :
                 score_li = [-8,-8,-8,-8]
                 score_li[:] -= turn_player.agari_infos[0]
-                score_li[command_player_id] = 24 + turn_player.agari_infos[0] * 3
+                score_li[self.turn] = 24 + turn_player.agari_infos[0] * 3
                 self.is_done = True
                 self.is_ready = False
                 await self.send_agari(self.turn,True,turn_player.agari_infos,turn_player.agari_infos)
+                self.log.append( score_li )
                 return tuple(score_li)
             # print(tile)
             self.target_tile = tile
-            print("DEBUG:BEFORE SUBTURN")
             subturn_tasks = [ None for i in range(4) ]
             for i in range(1,4): # 鳴き
                 pi = ( self.turn + i ) % 4
@@ -226,6 +222,12 @@ class Game:
             subturn_tasks[self.turn] = pure_async( Claim(0) )
             command = await Promise.all(subturn_tasks)
             command_player_id = np.argmax(command)
+            claims = []
+            for i in range(4):
+                if command[i].type > 0:
+                    claims.append( (i,command[i]) )
+            claims=sorted(claims,reverse=True)
+            self.log.append(claims)
 
             if command[command_player_id].type > 0 : # 鳴き/ロンがあった場合
                 if command[command_player_id].type == Claim.RON :
@@ -237,6 +239,7 @@ class Game:
                     self.is_done = True
                     self.is_ready = False
                     await self.send_agari(command_player_id,False,agari_player.agari_infos,agari_player.agari_infos)
+                    self.log.append( score_li )
                     return tuple(score_li)
                 elif command[command_player_id].type == Claim.MINKONG :
                     a,b,c = filter( lambda x:x>=0 , command[command_player_id].pos  )
