@@ -321,8 +321,3 @@ def _init_knit():
         KNITMASK[i,49:49+7] += 1
         KNITNUMS[i,:] = (KNITMASK[i]).nonzero()[0]
 _init_knit()
-
-if __name__ == "__main__" :
-    print( string_to_list_ex("67m 123456789s 99p 5m!") )
-    print( string_to_list_ex("*456p *789m *567s 5678p 5p") )
-    print( string_to_list_ex("*SSS *777s *111m 888s H H!") )

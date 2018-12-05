@@ -1,13 +1,8 @@
 # -*- coding : uft8 -*-
 
-try:
-    from .agari import *
-    from .util import *
-    from .config import *
-except:
-    from agari import *
-    from util import *
-    from config import *
+from .agari import *
+from .util import *
+from .config import *
 
 import numpy as np
 import functools,itertools

@@ -32,7 +32,9 @@ class TestScore(unittest.TestCase):
         else:
             raise AssertionError(" Hand : %s , Expect : %s , Got : %s " % (s,q,yn))
 
-
+    def test_7pairs(self):
+        pass
+        
     def test_knitted(self):
         self.assertYaku( "7m 258p 369s ESWNGR 1m!" , ["全不靠","不求人"] )
         self.assertYaku( "147m 28p 369s SWNGR 5p" , ["全不靠","組合龍"] )
@@ -52,7 +54,6 @@ class TestScore(unittest.TestCase):
     def test_chicken(self):
         self.assertYaku( "123m *777s *567p 56s WW 4s" , ["無番和"] )
 
-
     def test_ninegates(self):
         self.assertYaku( "1112345678999m 9m!" , ["九連宝燈","不求人","清龍","四帰一"] )
         self.assertYaku( "1112345678999m 6m!" , ["九連宝燈","不求人","連六"] )
@@ -71,6 +72,7 @@ class TestScore(unittest.TestCase):
 
 
     def test_misc(self):
+        self.assertYaku( "*888s *234s 66m 345p 67s 5s"  ,[ "連六","断么"] )
         self.assertYaku( "*678m *123s 44678s SS 4s!"  ,[ "自摸","喜相逢","缺一門" ] )
         self.assertYaku( "6m 147s 28p ESWNRGH 9m!"  ,[ "不求人" , "七星不靠" ] )
         self.assertYaku( "*567m 55678s 45667p 5p"  ,[ "三色三歩高", "平和","断么","喜相逢" ] )
