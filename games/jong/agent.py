@@ -24,6 +24,9 @@ class AITsumogiri:
     def select_discard(self,pl,game):
         return len(pl.hand)-1
 
+    def get_name(self):
+        return "ツモ切りAIちゃん"
+
     async def turn_command_async(self,pl,game,commands):
         return TurnCommand(TurnCommand.DISCARD,-1)
 
@@ -42,6 +45,9 @@ class AITsumogiri:
 class AIShanten:
     def __init__(self):
         pass
+
+    def get_name(self):
+        return "よわいAIちゃん"
 
     def select_discard(self,pl,game):
         ary = list_to_array(pl.hand)
@@ -70,6 +76,10 @@ class RemotePlayer:
 
     def __init__(self,connection):
         self.conn = connection
+
+    def get_name(self):
+        
+        return str( self.conn.get_user() )
 
     def send(self,obj):
         if not hasattr(self,"conn") :

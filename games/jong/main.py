@@ -42,6 +42,8 @@ async def main(conns,room):
         result.score3 = res[2]
         result.score4 = res[3]
         result.save()
+        await game.send_final_result()
+        
     except Exception as e :
         traceback.print_exc()
         raise e

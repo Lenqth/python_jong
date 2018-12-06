@@ -25,6 +25,13 @@ def safe_get(dic,key,default=None):
 
 
 class Game:
+    async def send_final_result(self):
+        dat = [ {"name" : pl.agent.get_name() , "point" :  self.total_score[pl.id] } for pl in self.players ]
+        dat = sorted( dat , key = lambda x:x["point"] ,reverse = True )
+        obj = { "type" : "final_result" , "dat" : dat }
+        for i in range(4):
+            await self.players[i].agent.send( obj )
+
     async def send_deck_left(self):
         obj = {
             "type" : "deck_left",
