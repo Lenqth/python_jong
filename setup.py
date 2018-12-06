@@ -13,7 +13,7 @@ setup(
     entry_points={
     }
 )
-
+"""
 from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
@@ -25,4 +25,4 @@ setup(
     include_dirs=[numpy.get_include()],
     extra_compile_args=['-fopenmp'],
     extra_link_args=['-fopenmp'],
-)
+)"""

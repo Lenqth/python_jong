@@ -2,12 +2,12 @@ import unittest
 from games.jong.judge.util import *
 from games.jong.judge.shanten import *
 
-import cProfile
-cProfile.run("""
-from games.jong.judge.util import *
-from games.jong.judge.shanten import *
-[ shanten(randomhand()) for i in range(1000) ]
-""")
+#import cProfile
+#cProfile.run("""
+#from games.jong.judge.util import *
+#from games.jong.judge.shanten import *
+#[ shanten(randomhand()) for i in range(1000) ]
+#""")
 class TestShanten(unittest.TestCase):
 
     def test_kokushi(self):

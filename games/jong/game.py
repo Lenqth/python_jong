@@ -23,6 +23,7 @@ def safe_get(dic,key,default=None):
     else:
         return default
 
+
 class Game:
     async def send_deck_left(self):
         obj = {
