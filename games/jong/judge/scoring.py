@@ -363,7 +363,7 @@ class ChineseScore:
         if np.sum( open_tiles == self.agari_tile ) >= 3 :
             yield ChineseScore.lasttile
 
-        if safe_get(self.env,"lefttile",-1) == 0:
+        if safe_get(self.env, "deck_left", -1) == 0:
             if safe_get(self.env,"tsumo",False) :
                 yield ChineseScore.lastdraw
             else:
