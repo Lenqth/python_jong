@@ -89,6 +89,7 @@ class ChineseScore:
         
     @classmethod
     def judge(cls,tiles,exposed,env,agari_tile=None):
+        import traceback
         if agari_tile == None :
             agari_tile = tiles[-1]
         agaris = is_agari(list_to_array(tiles),exposed_mentu=len(exposed))
@@ -131,9 +132,14 @@ class ChineseScore:
                         part.agari_tile = None
             else:
                 res.append( cls.list_yaku(ag["type"],all_tiles,[],env) )
-        res.sort( key = lambda dat:dat[0] , reverse=True )
-        res[0][1].sort( key = lambda x:(x.score,x.chinese_name) , reverse = True )
-        return res[0]
+        try:
+            res.sort( key = lambda dat:dat[0] , reverse=True )
+            res[0][1].sort( key = lambda x:(x.score,x.chinese_name) , reverse = True )
+            return res[0]
+        except:
+            print("exception on **JUDGE**")
+            traceback.print_exc()
+            return None
     """
     chicken = Yaku( "Chicken Hand" , "無番和" , 8  )
     """
