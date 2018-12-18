@@ -32,6 +32,7 @@ class Player:
     def __init__(self,game,id):
         self.game = game
         self.id = id
+        self.agari_infos = None
         self.reset()
 
     def chk_agari(self,game,tile,tsumo):
