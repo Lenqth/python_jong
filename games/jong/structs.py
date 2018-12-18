@@ -102,7 +102,7 @@ class Exposed:
     MINKONG = 3
     APKONG = 4
     CONCKONG = 5
-    __TYPENAMES__ = ["","chow","pong","minkong","conckong","apkong"]
+    __TYPENAMES__ = ["","chow","pong","minkong","apkong","conckong"]
     def __init__(self,type,head):
         self.type = type
         self.head = head
